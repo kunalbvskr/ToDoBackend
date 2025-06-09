@@ -9,24 +9,24 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-# connection_string = "Driver={ODBC Driver 17 for SQL Server};Server=tcp:kbvskr.database.windows.net,1433;Database=mysqldb;Uid=dbadmin;Pwd=admin@123;Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"
+db_connection_string = "Driver={ODBC Driver 17 for SQL Server};Server=tcp:kbvskr-mssqlserver.database.windows.net,1433;Database=kbvskrdb;Uid=dbadmin;Pwd=Kbvskr@12345;Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"
 
 db_name = "kbvskrdb"
 
-server_connection_string = (
-    "DRIVER={ODBC Driver 17 for SQL Server};"
-    "SERVER=kbvskr-mssqlserver.database.windows.net;"
-    "UID=sa;"
-    "PWD=Kbvskr@12345;"
-)
+# server_connection_string = (
+#     "DRIVER={ODBC Driver 17 for SQL Server};"
+#     "SERVER=kbvskr-mssqlserver.database.windows.net;"
+#     "UID=sa;"
+#     "PWD=Kbvskr@12345;"
+# )
 
-db_connection_string = (
-    "DRIVER={ODBC Driver 17 for SQL Server};"
-    "SERVER=kbvskr-mssqlserver.database.windows.net;"
-    f"DATABASE={db_name};"
-    "UID=sa;"
-    "PWD=Kbvskr@12345;"
-)
+# db_connection_string = (
+#     "DRIVER={ODBC Driver 17 for SQL Server};"
+#     "SERVER=kbvskr-mssqlserver.database.windows.net;"
+#     f"DATABASE={db_name};"
+#     "UID=sa;"
+#     "PWD=Kbvskr@12345;"
+# )
 
 app = FastAPI()
 
@@ -51,10 +51,10 @@ def create_tasks_table():
     i=0
     try:
         #Connect without db to create it
-        with pyodbc.connect(server_connection_string, autocommit=True) as conn:
-            cursor = conn.cursor()
-            cursor.execute(f"CREATE DATABASE {db_name}")
-            i+=1
+        # with pyodbc.connect(server_connection_string, autocommit=True) as conn:
+        #     cursor = conn.cursor()
+        #     cursor.execute(f"CREATE DATABASE {db_name}")
+        #     i+=1
 
         # Connect to DB and create table
         with pyodbc.connect(db_connection_string, autocommit=True) as conn:
@@ -69,7 +69,7 @@ def create_tasks_table():
             i+=1
     except Exception as e:
         print(e)
-    if i == 2:
+    if i == 1:
         return "Database and Tables are created. Tasks API is ready."
     else:
         return "Error creating database or table."
