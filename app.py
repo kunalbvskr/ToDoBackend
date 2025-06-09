@@ -17,7 +17,7 @@ server_connection_string = (
     "DRIVER={ODBC Driver 17 for SQL Server};"
     "SERVER=kbvskr-mssqlserver.database.windows.net;"
     "UID=sa;"
-    "PWD=DBadmin@12345;"
+    "PWD=Kbvskr@12345;"
 )
 
 db_connection_string = (
@@ -25,7 +25,7 @@ db_connection_string = (
     "SERVER=kbvskr-mssqlserver.database.windows.net;"
     f"DATABASE={db_name};"
     "UID=sa;"
-    "PWD=DBadmin@12345;"
+    "PWD=Kbvskr@12345;"
 )
 
 app = FastAPI()
