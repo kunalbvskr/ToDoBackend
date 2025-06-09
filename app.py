@@ -9,7 +9,24 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-connection_string = os.getenv("CONNECTION_STRING")
+# connection_string = "Driver={ODBC Driver 17 for SQL Server};Server=tcp:kbvskr.database.windows.net,1433;Database=mysqldb;Uid=dbadmin;Pwd=admin@123;Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"
+
+db_name = "kbvskrdb"
+
+server_connection_string = (
+    "DRIVER={ODBC Driver 17 for SQL Server};"
+    "SERVER=kbvskr-mssqlserver.database.windows.net;"
+    "UID=sa;"
+    "PWD=DBadmin@12345;"
+)
+
+db_connection_string = (
+    "DRIVER={ODBC Driver 17 for SQL Server};"
+    "SERVER=kbvskr-mssqlserver.database.windows.net;"
+    f"DATABASE={db_name};"
+    "UID=sa;"
+    "PWD=DBadmin@12345;"
+)
 
 app = FastAPI()
 
@@ -28,28 +45,40 @@ class Task(BaseModel):
     description: str
 
 # Create a table for tasks (You can run this once outside of the app)
-@app.get("/api")
+# @app.get("/api")
+@app.on_event("startup")
 def create_tasks_table():
+    i=0
     try:
-        conn = pyodbc.connect(connection_string)
-        cursor = conn.cursor()
-        cursor.execute("""
-            CREATE TABLE Tasks (
-                ID int NOT NULL PRIMARY KEY IDENTITY,
-                Title varchar(255),
-                Description text
-            );
-        """)
-        conn.commit()        
+        #Connect without db to create it
+        with pyodbc.connect(server_connection_string, autocommit=True) as conn:
+            cursor = conn.cursor()
+            cursor.execute(f"CREATE DATABASE {db_name}")
+            i+=1
+
+        # Connect to DB and create table
+        with pyodbc.connect(db_connection_string, autocommit=True) as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                CREATE TABLE Tasks (
+                    ID int NOT NULL PRIMARY KEY IDENTITY,
+                    Title varchar(255),
+                    Description text
+                );
+            """)
+            i+=1
     except Exception as e:
         print(e)
-    return "Table Created... Tasks API Ready"
+    if i == 2:
+        return "Database and Tables are created. Tasks API is ready."
+    else:
+        return "Error creating database or table."
 
 # List all tasks
 @app.get("/api/tasks")
 def get_tasks():
     tasks = []
-    with pyodbc.connect(connection_string) as conn:
+    with pyodbc.connect(db_connection_string) as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM Tasks")
         for row in cursor.fetchall():
@@ -64,7 +93,7 @@ def get_tasks():
 # Retrieve a single task by ID
 @app.get("/api/tasks/{task_id}")
 def get_task(task_id: int):
-    with pyodbc.connect(connection_string) as conn:
+    with pyodbc.connect(db_connection_string) as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM Tasks WHERE ID = ?", task_id)
         row = cursor.fetchone()
@@ -80,7 +109,7 @@ def get_task(task_id: int):
 # Create a new task
 @app.post("/api/tasks")
 def create_task(task: Task):
-    with pyodbc.connect(connection_string) as conn:
+    with pyodbc.connect(db_connection_string) as conn:
         cursor = conn.cursor()
         cursor.execute("INSERT INTO Tasks (Title, Description) VALUES (?, ?)", task.title, task.description)
         conn.commit()
@@ -89,7 +118,7 @@ def create_task(task: Task):
 # Update an existing task by ID
 @app.put("/tasks/{task_id}")
 def update_task(task_id: int, updated_task: Task):
-    with pyodbc.connect(connection_string) as conn:
+    with pyodbc.connect(db_connection_string) as conn:
         cursor = conn.cursor()
         cursor.execute("UPDATE Tasks SET Title = ?, Description = ? WHERE ID = ?", updated_task.title, updated_task.description, task_id)
         conn.commit()
@@ -98,7 +127,7 @@ def update_task(task_id: int, updated_task: Task):
 # Delete a task by ID
 @app.delete("/api/tasks/{task_id}")
 def delete_task(task_id: int):
-    with pyodbc.connect(connection_string) as conn:
+    with pyodbc.connect(db_connection_string) as conn:
         cursor = conn.cursor()
         cursor.execute("DELETE FROM Tasks WHERE ID = ?", task_id)
         conn.commit()
